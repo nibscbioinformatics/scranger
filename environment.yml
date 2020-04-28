@@ -4,12 +4,24 @@ name: nibscbioinformatics-scranger-1.0dev
 channels:
   - conda-forge
   - bioconda
+  - r
   - defaults
 dependencies:
   - conda-forge::python=3.7.3
   - conda-forge::markdown=3.1.1
   - conda-forge::pymdown-extensions=6.0
   - conda-forge::pygments=2.5.2
-  # TODO nf-core: Add required software dependencies here
   - bioconda::fastqc=0.11.8
   - bioconda::multiqc=1.7
+  - bioconda::seqkit=0.12.1
+  - conda-forge::texlive-core=20180414
+  - conda-forge::pandoc=2.9.2.1
+  - r::r=3.6.0
+  - r::r-tidyverse=1.2.1
+  - r::r-pander=0.6.3
+  - r::r-rmarkdown=1.12
+  - r::r-knitr=1.22
+  - conda-forge::r-mvoutlier=2.0.9
+  - bioconda::r-mutoss=0.1_12
+  - conda-forge::r-metap=1.1
+  - conda-forge::r-seurat=3.1.5

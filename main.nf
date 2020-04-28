@@ -247,6 +247,168 @@ process multiqc {
     """
 }
 
+
+
+
+/*
+############################################
+###### EXISTING PIPELINE ###################
+############################################
+*/
+
+
+
+// samples metadata need to be specified in tabular format with the following information (per column)
+// SAMPLE NAME (which goes into cell ranger)
+// SAMPLE ID(s) again in cell ranger specification from fastq files for merging
+// FASTQ FOLDER(s) where files with a name formatted to begin with the provided sample ID are present
+// the file has to be tab separated because a coma is used to separate ids and folders
+
+Channel
+      .fromPath("${params.metadata}")
+      .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
+      .map{ row-> tuple(row.sampleID, row.fastqIDs, row.fastqLocs) }
+      .set { metadata_ch }
+
+
+// This first process uses the CellRanger suite in order to process the reads per sample
+// collapse the UMIs and identify cell barcodes
+// creating the genome alingments as well as the expression counts
+
+
+
+process CellRangerCount {
+
+  tag "counting"
+  cpus 12
+  queue 'WORK'
+  time '2d'
+  memory '200 GB'
+
+  publishDir "$params.output_dir/counting/", mode: 'copy'
+
+  input:
+  set sampleName, fastqIDs, fastqLocs from metadata_ch
+
+
+  output:
+  file("$sampleName/outs/metrics_summary.csv") into cellranger_summary_ch
+  file("$sampleName/outs/filtered_feature_bc_matrix/*.gz") into count_files_ch
+  tuple file("$sampleName/outs/possorted_genome_bam.bam"), file("$sampleName/outs/possorted_genome_bam.bam.bai") into alignments_ch
+  val("$sampleName") into processed_samples
+
+  script:
+
+  """
+  cellranger count \
+  --id=${sampleName} \
+  --sample=${fastqIDs} \
+  --fastqs=${fastqLocs} \
+  --transcriptome=$params.reference
+  """
+
+}
+
+
+// Next we use the Seurat package in order to aggregage the previously generated counts
+
+
+process Aggregate {
+
+  tag "aggregate"
+  cpus 2
+  queue 'WORK'
+  time '24h'
+  memory '20 GB'
+
+  publishDir "$params.output_dir/aggregated", mode: 'copy'
+
+  input:
+  val(sampleData) from processed_samples.collect()
+
+  output:
+  file('aggregated_object.RData') into (aggregate_filtered_ch, aggregate_unfiltered_ch)
+
+  script:
+  sampleNamesList = []
+  countFoldersList = []
+  sampleData.each() { a -> sampleNamesList.add(a); countFoldersList.add("$params.output_dir/counting/" + a + "/outs/filtered_feature_bc_matrix/") }
+  sampleNames = sampleNamesList.join(",")
+  countFolders = countFoldersList.join(",")
+
+  """
+  Rscript -e "workdir<-getwd()
+  rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/aggregate.Rmd',
+    params = list(
+      sample_paths = \\\"$countFolders\\\",
+      sample_names = \\\"$sampleNames\\\",
+      output_path = workdir),
+      knit_root_dir=workdir,
+      output_dir=workdir)"
+  """
+
+}
+
+
+// A minimum set of exploratory analyses are then run on unfiltered and filtered data
+
+process ExploreUnfiltered {
+
+  tag "exploreUnfiltered"
+  cpus 2
+  queue 'WORK'
+  time '8h'
+  memory '20 GB'
+
+  publishDir "$params.output_dir/reports", mode: 'copy'
+
+  input:
+  file(aggregatedObj) from aggregate_unfiltered_ch
+
+  output:
+  file('analyse_unfiltered.html') into unfiltered_report_ch
+  file('aggregated_object_analyzed_unfiltered.RData') into unfiltered_object_ch
+
+  script:
+  """
+  Rscript -e "workdir<-getwd()
+    rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/analyse_unfiltered.Rmd',
+    params = list(input_path = \\\"$aggregatedObj\\\"),
+    knit_root_dir=workdir,
+    output_dir=workdir)"
+  """
+}
+
+
+process ExploreFiltered {
+
+  tag "exploreFiltered"
+  cpus 2
+  queue 'WORK'
+  time '8h'
+  memory '20 GB'
+
+  publishDir "$params.output_dir/reports", mode: 'copy'
+
+  input:
+  file(aggregatedObj) from aggregate_filtered_ch
+
+  output:
+  file('analyse_filtered.html') into filtered_report_ch
+  file('aggregated_object_analyzed_filtered.RData') into filtered_object_ch
+
+  script:
+  """
+  Rscript -e "workdir<-getwd()
+    rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/analyse_filtered.Rmd',
+    params = list(input_path = \\\"$aggregatedObj\\\"),
+    knit_root_dir=workdir,
+    output_dir=workdir)"
+  """
+}
+
+
+
 /*
  * STEP 3 - Output Description HTML
  */
