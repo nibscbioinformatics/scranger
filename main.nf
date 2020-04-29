@@ -103,17 +103,19 @@ allData = fastqc_pre_ch.collect()
 //   }
 // }
 
-fastqc_files_ch = Channel.from(allData)
-    .map {
-      data ->
-      def sampleID = data[0]
-      def fastqIDs = data[1]
-      def fastqLocs = data[3]
-      fastqLocs.splitCsv().each() {
-        fastq ->
-        return [sampleID, fastq]
-      }
+fastqc_files_ch = Channel.fromList(
+  allData.each() {
+    data ->
+    def sampleID = data[0]
+    def fastqIDs = data[1]
+    def fastqLocs = data[3]
+    fastqLocs.splitCsv().each() {
+      fastq ->
+      return [sampleID, fastq]
     }
+  }
+  )
+
 
 
 // Has the run name been specified by the user?
