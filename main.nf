@@ -65,7 +65,8 @@ if (params.transcriptomes && params.cellranger_reference && !params.transcriptom
 
 
 params.refpack = params.cellranger_reference ? params.transcriptomes[ params.cellranger_reference ].file ?: false : false
-if (params.refpack) { ch_reference = Channel.value(file(params.refpack, checkIfExists: true)) }
+params.refBaseName = params.cellranger_reference ? params.transcriptomes[ params.cellranger_reference ].basename ?: false : false
+if (params.refpack) { ch_reference = Channel.value(tuple(val(params.refBaseName), file(params.refpack, checkIfExists: true))) }
 
 
 // #############################
@@ -289,10 +290,10 @@ process unpackReference {
   label "process_small"
 
   input:
-  file(reference) from ch_reference
+  tuple val(basename), file(reference) from ch_reference
 
   output:
-  path("*cellranger*/", type: 'dir') into ch_reference_folder
+  path("${basename}", type: 'dir') into ch_reference_folder
 
   script:
   """
