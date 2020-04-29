@@ -292,7 +292,7 @@ process unpackReference {
   file(reference) from ch_reference
 
   output:
-  path("${reference.getSimpleName()}", type: 'dir') into ch_reference_folder
+  path("*cellranger*/", type: 'dir') into ch_reference_folder
 
   script:
   """
