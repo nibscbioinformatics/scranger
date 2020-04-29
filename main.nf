@@ -9,6 +9,11 @@
 ----------------------------------------------------------------------------------------
 */
 
+// ############ PARAMS DEFAULTS ####################
+params.cellranger_reference = 'GRCh38'
+
+
+
 def helpMessage() {
     // TODO nf-core: Add to this help message with new command line parameters
     log.info nfcoreHeader()
@@ -21,16 +26,13 @@ def helpMessage() {
     nextflow run nibscbioinformatics/scranger --reads '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
-      --reads [file]                Path to input data (must be surrounded with quotes)
-      -profile [str]                Configuration profile to use. Can use multiple (comma separated)
-                                    Available: conda, docker, singularity, test, awsbatch, <institute> and more
+      --input [file]                  Path to input sample TSV file
+      -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
+                                      Available: conda, docker, singularity, test, awsbatch, <institute> and more
 
     Options:
-      --genome [str]                  Name of iGenomes reference
-      --single_end [bool]             Specifies that the input is single-end reads
-
-    References                        If not specified in the configuration file or you wish to overwrite any of the references
-      --fasta [file]                  Path to fasta reference
+      --cellranger_reference [str]    Name of the reference version to be used for transcriptome analysis.
+                                      Available: GRCh38 (Homo sapiens), mm10 (Mus musculus). Default is GRCh38.
 
     Other options:
       --outdir [file]                 The output directory where the results will be saved
@@ -56,21 +58,48 @@ if (params.help) {
  * SET UP CONFIGURATION VARIABLES
  */
 
-// Check if genome exists in the config file
-if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
+// Check if transcriptome exists in the config file
+if (params.transcriptomes && params.cellranger_reference && !params.transcriptomes.containsKey(params.cellranger_reference)) {
+    exit 1, "The provided transcriptome '${params.cellranger_reference}' is not available in the repository. Currently the available transcriptomes are ${params.transcriptomes.keySet().join(", ")}"
 }
 
-// TODO nf-core: Add any reference files that are needed
-// Configurable reference genomes
-//
-// NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// If you want to use the channel below in a process, define the following:
-//   input:
-//   file fasta from ch_fasta
-//
-params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
-if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
+
+params.refpack = params.cellranger_reference ? params.transcriptomes[ params.cellranger_reference ].file ?: false : false
+if (params.refpack) { ch_reference = Channel.value(file(params.refpack, checkIfExists: true)) }
+
+
+// #############################
+// ## DEFINE THE INPUTS
+
+// samples metadata need to be specified in tabular format with the following information (per column)
+// SAMPLE NAME (which goes into cell ranger)
+// SAMPLE ID(s) again in cell ranger specification from fastq files for merging
+// FASTQ FOLDER(s) where files with a name formatted to begin with the provided sample ID are present
+// the file has to be tab separated because a coma is used to separate ids and folders
+
+Channel
+      .fromPath("${params.input}")
+      .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
+      .map{ row-> tuple(row.sampleID, row.fastqIDs, row.fastqLocs) }
+      .set { metadata_ch, fastqc_pre_ch }
+
+// #########################################
+// ## PROCESS THE QUITE SPECIAL FORMAT REQUIRED
+// ## BY CELLRANGER into a list of fastq to be used
+// ## for the FastQC process
+
+fastqc_files_ch = Channel.empty()
+allData = fastqc_pre_ch.collect()
+allData.each() {
+  data ->
+  def sampleID = data[0]
+  def fastqIDs = data[1]
+  def fastqLocs = data[3]
+  fastqLocs.splitCsv().each() {
+    fastq ->
+    tuple(sampleID, fastq) into fastqc_files_ch
+  }
+}
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
@@ -94,29 +123,7 @@ ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: t
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 
-/*
- * Create a channel for input read files
- */
-if (params.readPaths) {
-    if (params.single_end) {
-        Channel
-            .from(params.readPaths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    } else {
-        Channel
-            .from(params.readPaths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true), file(row[1][1], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    }
-} else {
-    Channel
-        .fromFilePairs(params.reads, size: params.single_end ? 1 : 2)
-        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
-        .into { ch_read_files_fastqc; ch_read_files_trimming }
-}
+
 
 // Header log info
 log.info nfcoreHeader()
@@ -201,13 +208,13 @@ process get_software_versions {
 process fastqc {
     tag "$name"
     label 'process_medium'
-    publishDir "${params.outdir}/fastqc", mode: 'copy',
+    publishDir "${params.outdir}/fastqc/${sampleID}", mode: 'copy',
         saveAs: { filename ->
                       filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"
                 }
 
     input:
-    set val(name), file(reads) from ch_read_files_fastqc
+    set val(sampleID), file(reads) from fastqc_files_ch
 
     output:
     file "*_fastqc.{zip,html}" into ch_fastqc_results
@@ -258,44 +265,51 @@ process multiqc {
 
 
 
-// samples metadata need to be specified in tabular format with the following information (per column)
-// SAMPLE NAME (which goes into cell ranger)
-// SAMPLE ID(s) again in cell ranger specification from fastq files for merging
-// FASTQ FOLDER(s) where files with a name formatted to begin with the provided sample ID are present
-// the file has to be tab separated because a coma is used to separate ids and folders
-
-Channel
-      .fromPath("${params.metadata}")
-      .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
-      .map{ row-> tuple(row.sampleID, row.fastqIDs, row.fastqLocs) }
-      .set { metadata_ch }
-
-
 // This first process uses the CellRanger suite in order to process the reads per sample
 // collapse the UMIs and identify cell barcodes
 // creating the genome alingments as well as the expression counts
 
 
+process unpackReference {
+
+  tag "unpacking reference"
+  label "process_small"
+
+  input:
+  file(reference) from ch_reference
+
+  output:
+  path("${reference.simpleName}", type: 'dir') into ch_reference_folder
+
+  script:
+  """
+  tar -xvzf ${reference}
+  """
+
+}
+
 
 process CellRangerCount {
 
   tag "counting"
-  cpus 12
-  queue 'WORK'
-  time '2d'
-  memory '200 GB'
+  label "process_high"
+  label "process_long"
 
-  publishDir "$params.output_dir/counting/", mode: 'copy'
+  publishDir "$params.outdir/${sampleName}/counts/", mode: 'copy',
+      saveAs: { filename ->
+                    "${sampleName}_${filename}"
+              }
 
   input:
+  path(referenceFolder) from ch_reference_folder
   set sampleName, fastqIDs, fastqLocs from metadata_ch
 
 
   output:
-  file("$sampleName/outs/metrics_summary.csv") into cellranger_summary_ch
-  file("$sampleName/outs/filtered_feature_bc_matrix/*.gz") into count_files_ch
-  tuple file("$sampleName/outs/possorted_genome_bam.bam"), file("$sampleName/outs/possorted_genome_bam.bam.bai") into alignments_ch
-  val("$sampleName") into processed_samples
+  tuple val("$sampleName"), file("metrics_summary.csv") into cellranger_summary_ch
+  tuple val("$sampleName"), file("*.gz") into count_files_ch
+  tuple val("$sampleName"), file("possorted_genome_bam.bam"), file("possorted_genome_bam.bam.bai") into alignments_ch
+  tuple val("$sampleName"), val("$PWD") into processed_samples
 
   script:
 
@@ -304,7 +318,12 @@ process CellRangerCount {
   --id=${sampleName} \
   --sample=${fastqIDs} \
   --fastqs=${fastqLocs} \
-  --transcriptome=$params.reference
+  --transcriptome=${referenceFolder}
+
+  mv ${sampleName}/outs/metrics_summary.csv .
+  mv "${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
+  mv ${sampleName}/outs/possorted_genome_bam.bam .
+  mv $sampleName/outs/possorted_genome_bam.bam.bai .
   """
 
 }
@@ -321,18 +340,15 @@ process Aggregate {
   time '24h'
   memory '20 GB'
 
-  publishDir "$params.output_dir/aggregated", mode: 'copy'
+  publishDir "$params.outdir/aggregated", mode: 'copy'
 
   input:
-  val(sampleData) from processed_samples.collect()
+  set sampleNamesList, countFoldersList from processed_samples.collect()
 
   output:
   file('aggregated_object.RData') into (aggregate_filtered_ch, aggregate_unfiltered_ch)
 
   script:
-  sampleNamesList = []
-  countFoldersList = []
-  sampleData.each() { a -> sampleNamesList.add(a); countFoldersList.add("$params.output_dir/counting/" + a + "/outs/filtered_feature_bc_matrix/") }
   sampleNames = sampleNamesList.join(",")
   countFolders = countFoldersList.join(",")
 
@@ -355,12 +371,9 @@ process Aggregate {
 process ExploreUnfiltered {
 
   tag "exploreUnfiltered"
-  cpus 2
-  queue 'WORK'
-  time '8h'
-  memory '20 GB'
+  label "process_medium"
 
-  publishDir "$params.output_dir/reports", mode: 'copy'
+  publishDir "$params.outdir/reports", mode: 'copy'
 
   input:
   file(aggregatedObj) from aggregate_unfiltered_ch
@@ -383,12 +396,9 @@ process ExploreUnfiltered {
 process ExploreFiltered {
 
   tag "exploreFiltered"
-  cpus 2
-  queue 'WORK'
-  time '8h'
-  memory '20 GB'
+  label "process_medium"
 
-  publishDir "$params.output_dir/reports", mode: 'copy'
+  publishDir "$params.outdir/reports", mode: 'copy'
 
   input:
   file(aggregatedObj) from aggregate_filtered_ch
