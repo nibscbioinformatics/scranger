@@ -90,8 +90,8 @@ Channel
 // ## BY CELLRANGER into a list of fastq to be used
 // ## for the FastQC process
 
-fastqc_files_ch = Channel.empty()
-allData = fastqc_pre_ch.collect()
+// fastqc_files_ch = Channel.empty()
+// allData = fastqc_pre_ch.collect()
 // allData.each() {
 //   data ->
 //   def sampleID = data[0]
@@ -102,6 +102,19 @@ allData = fastqc_pre_ch.collect()
 //     tuple(sampleID, fastq) into fastqc_files_ch
 //   }
 // }
+
+fastqc_files_ch = Channel.from(fastqc_pre_ch)
+    .map {
+      data ->
+      def sampleID = data[0]
+      def fastqIDs = data[1]
+      def fastqLocs = data[3]
+      fastqLocs.splitCsv().each() {
+        fastq ->
+        return [sampleID, fastq]
+      }
+    }
+
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
