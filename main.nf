@@ -92,16 +92,16 @@ Channel
 
 fastqc_files_ch = Channel.empty()
 allData = fastqc_pre_ch.collect()
-allData.each() {
-  data ->
-  def sampleID = data[0]
-  def fastqIDs = data[1]
-  def fastqLocs = data[3]
-  fastqLocs.splitCsv().each() {
-    fastq ->
-    tuple(sampleID, fastq) into fastqc_files_ch
-  }
-}
+// allData.each() {
+//   data ->
+//   def sampleID = data[0]
+//   def fastqIDs = data[1]
+//   def fastqLocs = data[3]
+//   fastqLocs.splitCsv().each() {
+//     fastq ->
+//     tuple(sampleID, fastq) into fastqc_files_ch
+//   }
+// }
 
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
