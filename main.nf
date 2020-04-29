@@ -66,7 +66,7 @@ if (params.transcriptomes && params.cellranger_reference && !params.transcriptom
 
 params.refpack = params.cellranger_reference ? params.transcriptomes[ params.cellranger_reference ].file ?: false : false
 params.refBaseName = params.cellranger_reference ? params.transcriptomes[ params.cellranger_reference ].basename ?: false : false
-if (params.refpack) { ch_reference = Channel.value(["${params.refBaseName}", file(params.refpack, checkIfExists: true))] }
+if (params.refpack) { ch_reference = Channel.value(["${params.refBaseName}", file(params.refpack, checkIfExists: true)]) }
 
 
 // #############################
