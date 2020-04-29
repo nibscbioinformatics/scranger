@@ -83,14 +83,14 @@ Channel
       .map{ row-> tuple(row.sampleID, row.fastqIDs, row.fastqLocs) }
       .set { metadata_ch }
 
-  (metadata_ch, fastqc_pre_ch) = metadata_ch.into(2)
+
 
 // #########################################
 // ## PROCESS THE QUITE SPECIAL FORMAT REQUIRED
 // ## BY CELLRANGER into a list of fastq to be used
 // ## for the FastQC process
 
-fastqc_pre_ch = extractFastqFiles(params.input)
+fastqc_files_ch = extractFastqFiles(params.input)
 
 def extractFastqFiles(cellRangerTSV){
   def files_ch = Channel.empty()
