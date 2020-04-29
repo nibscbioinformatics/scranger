@@ -348,10 +348,8 @@ process CellRangerCount {
 process Aggregate {
 
   tag "aggregate"
-  cpus 2
-  queue 'WORK'
-  time '24h'
-  memory '20 GB'
+  label "process_medium"
+  label "process_long"
 
   publishDir "$params.outdir/aggregated", mode: 'copy'
 
