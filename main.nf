@@ -91,7 +91,7 @@ Channel
 // ## for the FastQC process
 
 // fastqc_files_ch = Channel.empty()
-// allData = fastqc_pre_ch.collect()
+allData = fastqc_pre_ch.collect()
 // allData.each() {
 //   data ->
 //   def sampleID = data[0]
@@ -103,7 +103,7 @@ Channel
 //   }
 // }
 
-fastqc_files_ch = Channel.from(fastqc_pre_ch)
+fastqc_files_ch = Channel.from(allData)
     .map {
       data ->
       def sampleID = data[0]
