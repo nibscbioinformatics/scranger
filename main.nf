@@ -81,7 +81,9 @@ Channel
       .fromPath("${params.input}")
       .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
       .map{ row-> tuple(row.sampleID, row.fastqIDs, row.fastqLocs) }
-      .set { metadata_ch, fastqc_pre_ch }
+      .set { metadata_ch }
+
+  (metadata_ch, fastqc_pre_ch) = metadata_ch.into(2)
 
 // #########################################
 // ## PROCESS THE QUITE SPECIAL FORMAT REQUIRED
