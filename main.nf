@@ -90,31 +90,28 @@ Channel
 // ## BY CELLRANGER into a list of fastq to be used
 // ## for the FastQC process
 
-// fastqc_files_ch = Channel.empty()
-allData = fastqc_pre_ch.collect()
-// allData.each() {
-//   data ->
-//   def sampleID = data[0]
-//   def fastqIDs = data[1]
-//   def fastqLocs = data[3]
-//   fastqLocs.splitCsv().each() {
-//     fastq ->
-//     tuple(sampleID, fastq) into fastqc_files_ch
-//   }
-// }
+fastqc_pre_ch = extractFastqFiles(params.input)
 
-fastqc_files_ch = Channel.fromList(
-  allData.each() {
-    data ->
-    def sampleID = data[0]
-    def fastqIDs = data[1]
-    def fastqLocs = data[3]
-    fastqLocs.splitCsv().each() {
-      fastq ->
-      return [sampleID, fastq]
-    }
-  }
-  )
+def extractFastqFiles(cellRangerTSV){
+  def files_ch = Channel.empty()
+  Channel
+        .fromPath("${params.input}")
+        .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
+        .subscribe onNext: { sampleData ->
+          def sampleID = sampleData.sampleID
+          def fastqLocs = sampleData.fastqLocs.split(',')
+          for (folder in fastqLocs) {
+            read1 = file("${folder}/*R1*.fastq.gz")
+            read2 = file("${folder}/*R2*.fastq.gz")
+            step1 = [sampleID, read1]
+            step2 = [sampleID, read2]
+            files_ch.bind(step1)
+            files_ch.bind(step2)
+          }
+
+        }, onComplete: { files_ch.close() }
+        files_ch
+}
 
 
 
