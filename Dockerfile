@@ -10,11 +10,9 @@ RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH /opt/conda/envs/nibscbioinformatics-scranger-1.0dev/bin:$PATH
 
 # Specific installation of Cellranger 3.1.0
-RUN mkdir -p /opt/software
-RUN cd /opt/software
 RUN wget -O cellranger-3.1.0.tar.gz "https://nfpipelines.blob.core.windows.net/nftools/cellranger-3.1.0.tar.gz"
 RUN tar -xzvf cellranger-3.1.0.tar.gz
-ENV PATH /opt/software/cellranger-3.1.0:$PATH
+ENV PATH /cellranger-3.1.0:$PATH
 
 # Dump the details of the installed packages to a file for posterity
 RUN conda env export --name nibscbioinformatics-scranger-1.0dev > nibscbioinformatics-scranger-1.0dev.yml
