@@ -14,5 +14,8 @@ RUN wget -O cellranger-3.1.0.tar.gz "https://nfpipelines.blob.core.windows.net/n
 RUN tar -xzvf cellranger-3.1.0.tar.gz
 ENV PATH /cellranger-3.1.0:$PATH
 
+# Install seurat from R itself
+RUN Rscript -e "install.packages('Seurat', repos = 'https://cloud.r-project.org')"
+
 # Dump the details of the installed packages to a file for posterity
 RUN conda env export --name nibscbioinformatics-scranger-1.0dev > nibscbioinformatics-scranger-1.0dev.yml
