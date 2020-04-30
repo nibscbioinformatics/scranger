@@ -92,11 +92,12 @@ Channel
 // ## for the FastQC process
 
 fastqc_files_ch = extractFastqFiles(params.input)
+fastqc_files_ch = fastqc_files_ch.dump(tag:'FASTQC CHANNEL')
 
 def extractFastqFiles(cellRangerTSV){
   def files_ch = Channel.empty()
   Channel
-        .fromPath("${params.input}")
+        .fromPath(cellRangerTSV)
         .splitCsv(header: ['sampleID', 'fastqIDs', 'fastqLocs'], sep: '\t')
         .subscribe onNext: { sampleData ->
           def sampleID = sampleData.sampleID
