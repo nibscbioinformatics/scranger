@@ -335,7 +335,7 @@ process CellRangerCount {
   --transcriptome=${referenceFolder}
 
   mv ${sampleName}/outs/metrics_summary.csv .
-  mv "${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
+  mv ${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
   mv ${sampleName}/outs/possorted_genome_bam.bam .
   mv $sampleName/outs/possorted_genome_bam.bam.bai .
   """
