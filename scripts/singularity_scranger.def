@@ -17,7 +17,8 @@ yum install -y \
     java-1.7.0-openjdk-devel \
     openssl-devel \
     texlive-* \
-    pandoc
+    pandoc \
+    python-pip
 
 ### setup of seqkit
 mkdir -p /opt/software/seqkit
@@ -30,18 +31,8 @@ mkdir -p /opt/software/rpackages
 cd /opt/software/rpackages
 Rscript -e "install.packages(c('BiocManager'), repos = 'https://cloud.r-project.org')"
 Rscript -e "install.packages(c('tidyverse','pander','rmarkdown', 'knitr', 'mvoutlier'), repos = 'https://cloud.r-project.org')"
-
-## version of this package not aligned with R version so using BiocManager
-## wget https://cran.r-project.org/src/contrib/mutoss_0.1-12.tar.gz
-## Rscript -e "install.packages('mutoss_0.1-12.tar.gz', repos = NULL)"
-
 Rscript -e "BiocManager::install(c('mutoss', 'metap', 'Seurat'))"
 
-### version of this package not aligned with R version so downloading manually
-## wget https://cran.r-project.org/src/contrib/metap_1.2.tar.gz
-## Rscript -e "install.packages('metap_1.2.tar.gz', repos = NULL)"
-## Rscript -e "install.packages('Seurat', repos = 'https://cloud.r-project.org')"
-#
 #
 mkdir -p /opt/software/10X
 cd /opt/software/10X
@@ -49,7 +40,20 @@ wget -O cellranger-3.1.0.tar.gz "https://nfpipelines.blob.core.windows.net/nftoo
 tar -xzvf cellranger-3.1.0.tar.gz
 
 
+##### ANACONDA INSTALLATION #####
+mkdir -p /opt/software/anaconda
+cd /opt/software/anaconda
+wget -O Anaconda2-2019.10-Linux-x86_64.sh "https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh"
+bash Anaconda2-2019.10-Linux-x86_64.sh -b -f -p /opt/software/anaconda
+eval "$(/opt/software/anaconda/bin/conda shell.bash hook)"
+conda init
+
+#### INSTALL remaining PACKAGES WITH CONDA #####
+wget -O singularity_env.yml "https://raw.githubusercontent.com/nibscbioinformatics/scranger/dev/scripts/singularity_env.yml.def"
+conda env create -f singularity_env.yml
+
+
 %environment
-export PATH=/opt/software/anaconda/envs/nibscbioinformatics-scranger-1.0dev/bin:${PATH}
+export PATH=/opt/software/anaconda/envs/nibscbioinformatics-scranger-1.0.1dev/bin:${PATH}
 export PATH=/opt/software/10X/cellranger-3.1.0:${PATH}
 export PATH=/opt/software/seqkit:${PATH}
