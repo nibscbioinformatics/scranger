@@ -7,7 +7,7 @@ channels:
   - r
   - defaults
 dependencies:
-  - conda-forge::python=2.7
+  - conda-forge::python=2.7.18
   - conda-forge::markdown=3.1.1
   - conda-forge::pymdown-extensions=6.0
   - conda-forge::pygments=2.5.2
