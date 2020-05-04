@@ -38,19 +38,21 @@ aggregated_samples = RunPCA(aggregated_samples)
 ## Find principal components
 
 ```{r components}
-aggregated_samples = JackStraw(aggregated_samples, num.replicate = 100, dims = 50, verbose = FALSE)
-aggregated_samples = ScoreJackStraw(aggregated_samples, dims = 1:50)
-jackstraw_pvalues = data.frame(aggregated_samples@reductions$pca@jackstraw$overall.p.values)
+## disabled jackstraw due to changes in package
+## see https://github.com/sansomlab/tenx/issues/100
+# aggregated_samples = JackStraw(aggregated_samples, num.replicate = 100, dims = 50, verbose = FALSE)
+# aggregated_samples = ScoreJackStraw(aggregated_samples, dims = 1:50)
+# jackstraw_pvalues = data.frame(aggregated_samples@reductions$pca@jackstraw$overall.p.values)
 
-for (i in 1:dim(jackstraw_pvalues)[1]) {
-  if (jackstraw_pvalues$Score[i] > 0.05) {
-    PC_number = i - 1
-    break
-  }
-}
+#for (i in 1:dim(jackstraw_pvalues)[1]) {
+#  if (jackstraw_pvalues$Score[i] > 0.05) {
+#    PC_number = i - 1
+#    break
+#  }
+#}
 
 ElbowPlot(aggregated_samples, ndims = 50)
-JackStrawPlot(aggregated_samples, dims = 1:50)
+# JackStrawPlot(aggregated_samples, dims = 1:50)
 ```
 
 ## Clustering and remove dead cells
