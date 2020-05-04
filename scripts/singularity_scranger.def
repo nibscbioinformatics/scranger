@@ -43,9 +43,12 @@ mkdir -p /opt/software/rpackages
 cd /opt/software/rpackages
 Rscript -e "install.packages(c('BiocManager'), repos = 'https://cloud.r-project.org')"
 Rscript -e "install.packages(c('tidyverse','pander','rmarkdown', 'knitr', 'mvoutlier'), repos = 'https://cloud.r-project.org')"
-Rscript -e "BiocManager::install(c('mutoss', 'metap'))"
+Rscript -e "BiocManager::install(c('mutoss', 'metap', 'S4Vectors', 'SummarizedExperiment','SingleCellExperiment', 'MAST', 'DESeq2', 'GenomicRanges', 'GenomeInfoDb', 'IRanges', 'rtracklayer', 'monocle', 'VGAM', 'zoo', 'bit64', 'bit', 'iterators', 'itertools'))"
 Rscript -e "install.packages(c('devtools'), repos = 'https://cloud.r-project.org')"
-Rscript -e "devtools::install_version('Seurat', version = '3.0.2', repos = 'https://cloud.r-project.org')"
+Rscript -e "install.packages(c('R.utils'), repos = 'https://cloud.r-project.org')"
+wget https://cran.r-project.org/src/contrib/Archive/SDMTools/SDMTools_1.1-221.tar.gz
+Rscript -e "install.packages('SDMTools_1.1-221.tar.gz', repos = NULL)"
+Rscript -e "devtools::install_version('Seurat', version = '3.1.0', repos = 'https://cloud.r-project.org')"
 
 #
 mkdir -p /opt/software/10X
