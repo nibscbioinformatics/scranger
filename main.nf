@@ -409,7 +409,7 @@ process ExploreUnfiltered {
   script:
   """
   Rscript -e "workdir<-getwd()
-    rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/analyse_unfiltered.Rmd',
+    rmarkdown::render('$baseDir/scripts/analyse_unfiltered.Rmd',
     params = list(input_path = \\\"$aggregatedObj\\\", is_test = \\\"$params.istest\\\"),
     knit_root_dir=workdir,
     output_dir=workdir)"
@@ -434,7 +434,7 @@ process ExploreFiltered {
   script:
   """
   Rscript -e "workdir<-getwd()
-    rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/analyse_filtered.Rmd',
+    rmarkdown::render('$baseDir/scripts/analyse_filtered.Rmd',
     params = list(input_path = \\\"$aggregatedObj\\\"),
     knit_root_dir=workdir,
     output_dir=workdir)"
