@@ -342,7 +342,7 @@ process CellRangerCount {
   """
 
 }
-
+processed_samples = processed_samples.dump(tag:'COUNTS')
 
 // Next we use the Seurat package in order to aggregage the previously generated counts
 
@@ -367,7 +367,7 @@ process Aggregate {
 
   """
   Rscript -e "workdir<-getwd()
-  rmarkdown::render('$HOME/CODE/core/workflows/singlecellrna/seurat_scripts/aggregate.Rmd',
+  rmarkdown::render('$baseDir/scripts/aggregate.Rmd',
     params = list(
       sample_paths = \\\"$countFolders\\\",
       sample_names = \\\"$sampleNames\\\",

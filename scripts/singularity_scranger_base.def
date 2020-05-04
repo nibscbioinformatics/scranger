@@ -40,20 +40,6 @@ wget -O cellranger-3.1.0.tar.gz "https://nfpipelines.blob.core.windows.net/nftoo
 tar -xzvf cellranger-3.1.0.tar.gz
 
 
-##### ANACONDA INSTALLATION #####
-mkdir -p /opt/software/anaconda
-cd /opt/software/anaconda
-wget -O Anaconda2-2019.10-Linux-x86_64.sh "https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh"
-bash Anaconda2-2019.10-Linux-x86_64.sh -b -f -p /opt/software/anaconda
-eval "$(/opt/software/anaconda/bin/conda shell.bash hook)"
-conda init
-
-#### INSTALL remaining PACKAGES WITH CONDA #####
-wget -O singularity_env.yml "https://raw.githubusercontent.com/nibscbioinformatics/scranger/dev/scripts/singularity_env.yml.def"
-conda env create -f singularity_env.yml
-
-
 %environment
-export PATH=/opt/software/anaconda/envs/nibscbioinformatics-scranger-1.0.1dev/bin:${PATH}
 export PATH=/opt/software/10X/cellranger-3.1.0:${PATH}
 export PATH=/opt/software/seqkit:${PATH}
