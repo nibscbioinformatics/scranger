@@ -324,7 +324,7 @@ process CellRangerCount {
   tuple val("$sampleName"), file("metrics_summary.csv") into cellranger_summary_ch
   tuple val("$sampleName"), file("*.gz") into count_files_ch
   tuple val("$sampleName"), file("possorted_genome_bam.bam"), file("possorted_genome_bam.bam.bai") into alignments_ch
-  tuple val("$sampleName"), (file("possorted_genome_bam.bam").getParent()) into processed_samples
+  tuple val("$sampleName"), val("${task.workDir}") into processed_samples
 
   script:
 
@@ -340,6 +340,8 @@ process CellRangerCount {
   mv ${sampleName}/outs/possorted_genome_bam.bam .
   mv $sampleName/outs/possorted_genome_bam.bam.bai .
   """
+
+
 
 }
 
