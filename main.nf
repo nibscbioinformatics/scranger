@@ -356,7 +356,7 @@ process Aggregate {
   publishDir "$params.outdir/aggregated", mode: 'copy'
 
   input:
-  set sampleNamesList, countFoldersList from processed_samples.collect()
+  set sampleNamesList, countFoldersList from processed_samples.toList()
 
   output:
   file('aggregated_object.RData') into (aggregate_filtered_ch, aggregate_unfiltered_ch)
