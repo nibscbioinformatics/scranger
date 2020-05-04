@@ -38,8 +38,7 @@ g2m.genes <- cc.genes.updated.2019$g2m.genes
 ### only run cell cycle scoring with real data
 if (params$is_test) {
   aggregated_samples <- NormalizeData(aggregated_samples)
-}
-else {
+} else {
   aggregated_samples <- CellCycleScoring(aggregated_samples, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
   aggregated_samples$CC.Difference <- aggregated_samples$S.Score - aggregated_samples$G2M.Score
   aggregated_samples = SCTransform(aggregated_samples, vars.to.regress = "CC.Difference", verbose = FALSE)
