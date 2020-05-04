@@ -7,7 +7,7 @@ channels:
   - r
   - defaults
 dependencies:
-  - conda-forge::python=2.7
+  - conda-forge::python=2.7.15
   - conda-forge::markdown=3.1.1
   - conda-forge::pymdown-extensions=6.0
   - conda-forge::pygments=2.5.2
@@ -24,4 +24,4 @@ dependencies:
   - conda-forge::r-mvoutlier=2.0.9
   - bioconda::r-mutoss=0.1_12
   - conda-forge::r-metap=1.1
-  - conda-forge::r-seurat=3.1.5
+  - conda-forge::r-seurat=3.0.2
