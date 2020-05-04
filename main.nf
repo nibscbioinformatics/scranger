@@ -324,7 +324,7 @@ process CellRangerCount {
   tuple val("$sampleName"), file("metrics_summary.csv") into cellranger_summary_ch
   tuple val("$sampleName"), file("*.gz") into count_files_ch
   tuple val("$sampleName"), file("possorted_genome_bam.bam"), file("possorted_genome_bam.bam.bai") into alignments_ch
-  tuple val("$sampleName"), val("$PWD") into processed_samples
+  tuple val("$sampleName"), file("*.gz").getParent() into processed_samples
 
   script:
 
@@ -359,12 +359,18 @@ process Aggregate {
   publishDir "$params.outdir/aggregated", mode: 'copy'
 
   input:
-  set sampleNamesList, countFoldersList from processed_samples.toList()
+  set countData from processed_samples.toList()
 
   output:
   file('aggregated_object.RData') into (aggregate_filtered_ch, aggregate_unfiltered_ch)
 
   script:
+  sampleNamesList = []
+  countFoldersList = []
+  countData.each() { sample,folder ->
+    sampleNamesList.add(sample)
+    countFoldersList.add(folder)
+  }
   sampleNames = sampleNamesList.join(",")
   countFolders = countFoldersList.join(",")
 
