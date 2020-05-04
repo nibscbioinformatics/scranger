@@ -324,7 +324,7 @@ process CellRangerCount {
   tuple val("$sampleName"), file("metrics_summary.csv") into cellranger_summary_ch
   tuple val("$sampleName"), file("*.gz") into count_files_ch
   tuple val("$sampleName"), file("possorted_genome_bam.bam"), file("possorted_genome_bam.bam.bai") into alignments_ch
-  tuple val("$sampleName"), val("${task.workDir}") into processed_samples
+  tuple val("$sampleName"), path("${sampleName}/outs/filtered_feature_bc_matrix", type: 'dir') into processed_samples
 
   script:
 
@@ -335,10 +335,10 @@ process CellRangerCount {
   --fastqs=${fastqLocs} \
   --transcriptome=${referenceFolder}
 
-  mv ${sampleName}/outs/metrics_summary.csv .
-  mv ${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
-  mv ${sampleName}/outs/possorted_genome_bam.bam .
-  mv $sampleName/outs/possorted_genome_bam.bam.bai .
+  ln -s ${sampleName}/outs/metrics_summary.csv .
+  ln -s ${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
+  ln -s ${sampleName}/outs/possorted_genome_bam.bam .
+  ln -s ${sampleName}/outs/possorted_genome_bam.bam.bai .
   """
 
 
@@ -361,14 +361,14 @@ process Aggregate {
   publishDir "$params.outdir/aggregated", mode: 'copy'
 
   input:
-  set countData from processed_samples.toList()
+  val countData from processed_samples.toList()
 
   output:
   file('aggregated_object.RData') into (aggregate_filtered_ch, aggregate_unfiltered_ch)
 
   script:
-  sampleNamesList = []
-  countFoldersList = []
+  def sampleNamesList = []
+  def countFoldersList = []
   countData.each() { sample,folder ->
     sampleNamesList.add(sample)
     countFoldersList.add(folder)
