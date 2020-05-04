@@ -58,6 +58,9 @@ ElbowPlot(aggregated_samples, ndims = 50)
 ## Clustering and remove dead cells
 
 ```{r clustering_and_remove_dead_cells}
+### due to the breaking change in Seurat package
+### have to go back to a fixed number of dimensions for this test
+PC_number = 30
 aggregated_samples = FindNeighbors(aggregated_samples, dims = 1:PC_number)
 aggregated_samples = FindClusters(aggregated_samples)
 VlnPlot(aggregated_samples, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), group.by = 'orig.ident', ncol = 3, pt.size = 0)
