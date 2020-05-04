@@ -342,7 +342,10 @@ process CellRangerCount {
   """
 
 }
-test = processed_samples.collect().dump(tag:'COUNTS')
+
+(testone, testtwo, testtree, processed_samples) = processed_samples.into(4)
+testone = testone.collect().dump(tag:'COUNTS COLLECT')
+testtwo = testtwo.toList().dump(tag: 'COUNTS TOLIST')
 
 // Next we use the Seurat package in order to aggregage the previously generated counts
 
