@@ -26,12 +26,26 @@ cd /opt/software/seqkit
 wget https://github.com/shenwei356/seqkit/releases/download/v0.11.0/seqkit_linux_amd64.tar.gz
 tar -zxvf seqkit_linux_amd64.tar.gz
 #
+##### ANACONDA INSTALLATION #####
+mkdir -p /opt/software/anaconda
+cd /opt/software/anaconda
+wget -O Anaconda2-2019.10-Linux-x86_64.sh "https://repo.anaconda.com/archive/Anaconda2-2019.10-Linux-x86_64.sh"
+bash Anaconda2-2019.10-Linux-x86_64.sh -b -f -p /opt/software/anaconda
+eval "$(/opt/software/anaconda/bin/conda shell.bash hook)"
+conda init
+
+#### INSTALL remaining PACKAGES WITH CONDA #####
+wget -O singularity_env.yml "https://raw.githubusercontent.com/nibscbioinformatics/scranger/dev/scripts/singularity_env.yml"
+conda env create -f singularity_env.yml
+#
 ### R packages installations
 mkdir -p /opt/software/rpackages
 cd /opt/software/rpackages
 Rscript -e "install.packages(c('BiocManager'), repos = 'https://cloud.r-project.org')"
 Rscript -e "install.packages(c('tidyverse','pander','rmarkdown', 'knitr', 'mvoutlier'), repos = 'https://cloud.r-project.org')"
-Rscript -e "BiocManager::install(c('mutoss', 'metap', 'Seurat'))"
+Rscript -e "BiocManager::install(c('mutoss', 'metap'))"
+Rscript -e "install.packages(c('devtools'), repos = 'https://cloud.r-project.org')"
+Rscript -e "devtools::install_version('Seurat', version = '3.0.2', repos = 'https://cloud.r-project.org')"
 
 #
 mkdir -p /opt/software/10X
@@ -41,5 +55,6 @@ tar -xzvf cellranger-3.1.0.tar.gz
 
 
 %environment
+export PATH=/opt/software/anaconda/envs/nibscbioinformatics-scranger-1.0.1dev/bin:${PATH}
 export PATH=/opt/software/10X/cellranger-3.1.0:${PATH}
 export PATH=/opt/software/seqkit:${PATH}
