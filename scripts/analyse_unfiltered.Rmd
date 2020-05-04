@@ -7,6 +7,7 @@ output:
   df_print: paged
 params:
   input_path: input_path
+  is_test: is_test
 ---
 
 ```{r setup, include=FALSE}
@@ -36,7 +37,11 @@ aggregated_samples = SCTransform(aggregated_samples, vars.to.regress = "CC.Diffe
 
 s.genes <- cc.genes.updated.2019$s.genes
 g2m.genes <- cc.genes.updated.2019$g2m.genes
-aggregated_samples <- CellCycleScoring(aggregated_samples, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+
+### only run cell cycle scoring with real data 
+if(!params$is_test){
+  aggregated_samples <- CellCycleScoring(aggregated_samples, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+}
 
 aggregated_samples = RunPCA(aggregated_samples)
 ```
