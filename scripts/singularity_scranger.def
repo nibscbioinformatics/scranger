@@ -1,10 +1,11 @@
 Bootstrap: yum
-OSVersion: 7
-MirrorURL: http://mirror.centos.org/centos-7/7.7.1908/os/x86_64/
+OSVersion: 6
+MirrorURL: http://mirror.centos.org/centos-6/6/os/x86_64/
 Include: yum
 
 %post
 ### basic setup of system wide tools and dependencies
+yum update -y
 yum install -y wget
 yum install -y epel-release
 yum install -y R
