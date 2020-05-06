@@ -12,6 +12,7 @@
 // ############ PARAMS DEFAULTS ####################
 params.cellranger_reference = 'GRCh38'
 params.istest = false
+params.chemistry = 'auto'
 
 
 def helpMessage() {
@@ -333,7 +334,8 @@ process CellRangerCount {
   --id=${sampleName} \
   --sample=${fastqIDs} \
   --fastqs=${fastqLocs} \
-  --transcriptome=${referenceFolder}
+  --transcriptome=${referenceFolder} \
+  --chemistry=${params.chemistry}
 
   ln -s ${sampleName}/outs/metrics_summary.csv .
   ln -s ${sampleName}/outs/filtered_feature_bc_matrix/*.gz .
