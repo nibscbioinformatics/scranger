@@ -7,6 +7,7 @@ output:
   df_print: paged
 params:
   input_path: input_path
+  is_test: is_test
 ---
 
 ```{r setup, include=FALSE}
@@ -62,13 +63,20 @@ aggregated_samples = FindNeighbors(aggregated_samples, dims = 1:PC_number)
 aggregated_samples = FindClusters(aggregated_samples)
 VlnPlot(aggregated_samples, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), group.by = 'orig.ident', ncol = 3, pt.size = 0)
 
-cells = c()
-x = aggregated_samples@meta.data[ , c("nFeature_RNA","nCount_RNA","percent.mt")]
-outliers = aq.plot(x, delta=qchisq(0.975, df = ncol(x)))
-outliers_index = which(unlist(outliers))
-outliers_names = rownames(x)[outliers_index]
-all_cells = WhichCells(aggregated_samples)
-cells = setdiff(all_cells, outliers_names)
+cells <- tryCatch({
+  cells = c()
+  x = aggregated_samples@meta.data[ , c("nFeature_RNA","nCount_RNA","percent.mt")]
+  outliers = aq.plot(x, delta=qchisq(0.975, df = ncol(x)))
+  outliers_index = which(unlist(outliers))
+  outliers_names = rownames(x)[outliers_index]
+  all_cells = WhichCells(aggregated_samples)
+  cells = setdiff(all_cells, outliers_names)
+  return(cells)
+  },
+  error = function(err) {
+    cells = c()
+    return(cells)
+    })
 dev.off()
 gc()
 
@@ -88,9 +96,15 @@ aggregated_samples = PercentageFeatureSet(aggregated_samples, pattern = "^MT-", 
 
 s.genes <- cc.genes.updated.2019$s.genes
 g2m.genes <- cc.genes.updated.2019$g2m.genes
-aggregated_samples <- CellCycleScoring(aggregated_samples, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
-aggregated_samples$CC.Difference <- aggregated_samples$S.Score - aggregated_samples$G2M.Score
-aggregated_samples = SCTransform(aggregated_samples, vars.to.regress = "CC.Difference", verbose = FALSE)
+
+### only run cell cycle scoring with real data
+if (params$is_test) {
+  aggregated_samples = SCTransform(aggregated_samples, verbose = FALSE)
+} else {
+  aggregated_samples <- CellCycleScoring(aggregated_samples, s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+  aggregated_samples$CC.Difference <- aggregated_samples$S.Score - aggregated_samples$G2M.Score
+  aggregated_samples = SCTransform(aggregated_samples, vars.to.regress = "CC.Difference", verbose = FALSE)
+}
 
 aggregated_samples = RunPCA(aggregated_samples)
 ```
