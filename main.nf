@@ -435,7 +435,7 @@ process ExploreFiltered {
   """
   Rscript -e "workdir<-getwd()
     rmarkdown::render('$baseDir/scripts/analyse_filtered.Rmd',
-    params = list(input_path = \\\"$aggregatedObj\\\"),
+    params = list(input_path = \\\"$aggregatedObj\\\", is_test = \\\"$params.istest\\\"),
     knit_root_dir=workdir,
     output_dir=workdir)"
   """
