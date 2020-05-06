@@ -146,17 +146,25 @@ FeaturePlot(aggregated_samples, features = c("nFeature_RNA", "nCount_RNA", "perc
 ## Differential expression
 
 ```{r differential_expression}
-Idents(object = aggregated_samples) <- "orig.ident"
-list_sample_names = as.vector(unique((aggregated_samples@active.ident)))
-for (sample in list_sample_names) {
-  markers <- FindMarkers(aggregated_samples, ident.1 = sample)
-  print(sample)
-  head(markers, n = 10)
-}
-
-aggregated_samples_markers = FindAllMarkers(aggregated_samples, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-top10 = aggregated_samples_markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
-DoHeatmap(aggregated_samples, features = top10$gene) + NoLegend()
+dummy <- tryCatch({
+    Idents(object = aggregated_samples) <- "orig.ident"
+    list_sample_names = as.vector(unique((aggregated_samples@active.ident)))
+    for (sample in list_sample_names) {
+      markers <- FindMarkers(aggregated_samples, ident.1 = sample)
+      print(sample)
+      head(markers, n = 10)
+    }
+    aggregated_samples_markers = FindAllMarkers(aggregated_samples, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+    top10 = aggregated_samples_markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+    DoHeatmap(aggregated_samples, features = top10$gene) + NoLegend()
+    result = "NA"
+    return(result)
+  },
+  error = function(err){
+    writeLines("WARNING: **No Features found**")
+    result = "NA"
+    return(result)
+    })
 ```
 
 ## Save file
